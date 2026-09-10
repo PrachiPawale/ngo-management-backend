@@ -1,45 +1,74 @@
 const db = require('../config/db');
 
-// Get all projects
-const getProjects = (req, res) => {
-    const sql = 'SELECT * FROM projects ORDER BY created_at DESC';
 
-    db.query(sql, (err, results) => {
+// ===============================
+// GET ALL PROJECTS
+// ===============================
+
+const getProjects = (req, res) => {
+
+    const sql = `
+        SELECT *
+        FROM projects
+        ORDER BY created_at DESC
+    `;
+
+    db.query(sql, (err, result) => {
+
         if (err) {
+            console.error('Error fetching projects:', err);
+
             return res.status(500).json({
                 message: 'Database error'
             });
         }
 
-        res.json(results);
+        res.json(result.rows);
     });
 };
 
-// Get single project
+
+// ===============================
+// GET SINGLE PROJECT
+// ===============================
+
 const getProjectById = (req, res) => {
+
     const { id } = req.params;
 
-    const sql = 'SELECT * FROM projects WHERE id = ?';
+    const sql = `
+        SELECT *
+        FROM projects
+        WHERE id = $1
+    `;
 
-    db.query(sql, [id], (err, results) => {
+    db.query(sql, [id], (err, result) => {
+
         if (err) {
+            console.error('Error fetching project:', err);
+
             return res.status(500).json({
                 message: 'Database error'
             });
         }
 
-        if (results.length === 0) {
+        if (result.rows.length === 0) {
             return res.status(404).json({
                 message: 'Project not found'
             });
         }
 
-        res.json(results[0]);
+        res.json(result.rows[0]);
     });
 };
 
-// Create project
+
+// ===============================
+// CREATE PROJECT
+// ===============================
+
 const createProject = (req, res) => {
+
     const { title, description, image } = req.body;
 
     if (!title || !description) {
@@ -49,15 +78,20 @@ const createProject = (req, res) => {
     }
 
     const sql = `
-        INSERT INTO projects (title, description, image)
-        VALUES (?, ?, ?)
+        INSERT INTO projects
+        (title, description, image)
+        VALUES ($1, $2, $3)
+        RETURNING id
     `;
 
     db.query(
         sql,
         [title, description, image || null],
         (err, result) => {
+
             if (err) {
+                console.error('Error creating project:', err);
+
                 return res.status(500).json({
                     message: 'Database error'
                 });
@@ -65,34 +99,50 @@ const createProject = (req, res) => {
 
             res.status(201).json({
                 message: 'Project created successfully',
-                projectId: result.insertId
+                projectId: result.rows[0].id
             });
         }
     );
 };
 
-// Update project
+
+// ===============================
+// UPDATE PROJECT
+// ===============================
+
 const updateProject = (req, res) => {
+
     const { id } = req.params;
     const { title, description, image } = req.body;
 
     const sql = `
         UPDATE projects
-        SET title = ?, description = ?, image = ?
-        WHERE id = ?
+        SET
+            title = $1,
+            description = $2,
+            image = $3
+        WHERE id = $4
     `;
 
     db.query(
         sql,
-        [title, description, image || null, id],
+        [
+            title,
+            description,
+            image || null,
+            id
+        ],
         (err, result) => {
+
             if (err) {
+                console.error('Error updating project:', err);
+
                 return res.status(500).json({
                     message: 'Database error'
                 });
             }
 
-            if (result.affectedRows === 0) {
+            if (result.rowCount === 0) {
                 return res.status(404).json({
                     message: 'Project not found'
                 });
@@ -105,20 +155,31 @@ const updateProject = (req, res) => {
     );
 };
 
-// Delete project
+
+// ===============================
+// DELETE PROJECT
+// ===============================
+
 const deleteProject = (req, res) => {
+
     const { id } = req.params;
 
-    const sql = 'DELETE FROM projects WHERE id = ?';
+    const sql = `
+        DELETE FROM projects
+        WHERE id = $1
+    `;
 
     db.query(sql, [id], (err, result) => {
+
         if (err) {
+            console.error('Error deleting project:', err);
+
             return res.status(500).json({
                 message: 'Database error'
             });
         }
 
-        if (result.affectedRows === 0) {
+        if (result.rowCount === 0) {
             return res.status(404).json({
                 message: 'Project not found'
             });
@@ -129,6 +190,7 @@ const deleteProject = (req, res) => {
         });
     });
 };
+
 
 module.exports = {
     getProjects,

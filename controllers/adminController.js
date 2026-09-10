@@ -12,14 +12,18 @@ const login = (req, res) => {
         });
     }
 
-    const sql = 'SELECT * FROM admin WHERE username = ?';
+    const sql = 'SELECT * FROM admin WHERE username = $1';
 
-    db.query(sql, [username], async (err, results) => {
+    db.query(sql, [username], async (err, result) => {
         if (err) {
+            console.error('Admin login database error:', err);
+
             return res.status(500).json({
                 message: 'Database error'
             });
         }
+
+        const results = result.rows;
 
         if (results.length === 0) {
             return res.status(401).json({
@@ -29,7 +33,10 @@ const login = (req, res) => {
 
         const admin = results[0];
 
-        const isMatch = await bcrypt.compare(password, admin.password);
+        const isMatch = await bcrypt.compare(
+            password,
+            admin.password
+        );
 
         if (!isMatch) {
             return res.status(401).json({

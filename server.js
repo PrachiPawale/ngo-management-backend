@@ -45,3 +45,12 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+db.query('SELECT NOW()')
+  .then(result => {
+    console.log('Supabase database connected!');
+    console.log('Database time:', result.rows[0]);
+  })
+  .catch(error => {
+    console.error('Database connection failed:', error.message);
+  });

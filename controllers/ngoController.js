@@ -1,10 +1,20 @@
 const db = require('../config/db');
 
-// Get all NGOs
-const getNGOs = (req, res) => {
-    const sql = 'SELECT * FROM ngos ORDER BY created_at DESC';
 
-    db.query(sql, (err, results) => {
+// ===============================
+// GET ALL NGOs
+// ===============================
+
+const getNGOs = (req, res) => {
+
+    const sql = `
+        SELECT *
+        FROM ngos
+        ORDER BY created_at DESC
+    `;
+
+    db.query(sql, (err, result) => {
+
         if (err) {
             console.error('Error fetching NGOs:', err);
 
@@ -13,17 +23,27 @@ const getNGOs = (req, res) => {
             });
         }
 
-        res.json(results);
+        res.json(result.rows);
     });
 };
 
-// Get single NGO
+
+// ===============================
+// GET SINGLE NGO
+// ===============================
+
 const getNGOById = (req, res) => {
+
     const { id } = req.params;
 
-    const sql = 'SELECT * FROM ngos WHERE id = ?';
+    const sql = `
+        SELECT *
+        FROM ngos
+        WHERE id = $1
+    `;
 
-    db.query(sql, [id], (err, results) => {
+    db.query(sql, [id], (err, result) => {
+
         if (err) {
             console.error('Error fetching NGO:', err);
 
@@ -32,18 +52,23 @@ const getNGOById = (req, res) => {
             });
         }
 
-        if (results.length === 0) {
+        if (result.rows.length === 0) {
             return res.status(404).json({
                 message: 'NGO not found'
             });
         }
 
-        res.json(results[0]);
+        res.json(result.rows[0]);
     });
 };
 
-// Create NGO
+
+// ===============================
+// CREATE NGO
+// ===============================
+
 const createNGO = (req, res) => {
+
     const {
         name,
         description,
@@ -63,8 +88,18 @@ const createNGO = (req, res) => {
 
     const sql = `
         INSERT INTO ngos
-        (name, description, mission, location, email, phone, logo, category)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        (
+            name,
+            description,
+            mission,
+            location,
+            email,
+            phone,
+            logo,
+            category
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id
     `;
 
     db.query(
@@ -80,6 +115,7 @@ const createNGO = (req, res) => {
             category || null
         ],
         (err, result) => {
+
             if (err) {
                 console.error('Error creating NGO:', err);
 
@@ -90,14 +126,19 @@ const createNGO = (req, res) => {
 
             res.status(201).json({
                 message: 'NGO created successfully',
-                ngoId: result.insertId
+                ngoId: result.rows[0].id
             });
         }
     );
 };
 
-// Update NGO
+
+// ===============================
+// UPDATE NGO
+// ===============================
+
 const updateNGO = (req, res) => {
+
     const { id } = req.params;
 
     const {
@@ -114,15 +155,15 @@ const updateNGO = (req, res) => {
     const sql = `
         UPDATE ngos
         SET
-            name = ?,
-            description = ?,
-            mission = ?,
-            location = ?,
-            email = ?,
-            phone = ?,
-            logo = ?,
-            category = ?
-        WHERE id = ?
+            name = $1,
+            description = $2,
+            mission = $3,
+            location = $4,
+            email = $5,
+            phone = $6,
+            logo = $7,
+            category = $8
+        WHERE id = $9
     `;
 
     db.query(
@@ -139,6 +180,7 @@ const updateNGO = (req, res) => {
             id
         ],
         (err, result) => {
+
             if (err) {
                 console.error('Error updating NGO:', err);
 
@@ -147,7 +189,7 @@ const updateNGO = (req, res) => {
                 });
             }
 
-            if (result.affectedRows === 0) {
+            if (result.rowCount === 0) {
                 return res.status(404).json({
                     message: 'NGO not found'
                 });
@@ -160,13 +202,22 @@ const updateNGO = (req, res) => {
     );
 };
 
-// Delete NGO
+
+// ===============================
+// DELETE NGO
+// ===============================
+
 const deleteNGO = (req, res) => {
+
     const { id } = req.params;
 
-    const sql = 'DELETE FROM ngos WHERE id = ?';
+    const sql = `
+        DELETE FROM ngos
+        WHERE id = $1
+    `;
 
     db.query(sql, [id], (err, result) => {
+
         if (err) {
             console.error('Error deleting NGO:', err);
 
@@ -175,7 +226,7 @@ const deleteNGO = (req, res) => {
             });
         }
 
-        if (result.affectedRows === 0) {
+        if (result.rowCount === 0) {
             return res.status(404).json({
                 message: 'NGO not found'
             });
@@ -186,6 +237,7 @@ const deleteNGO = (req, res) => {
         });
     });
 };
+
 
 module.exports = {
     getNGOs,

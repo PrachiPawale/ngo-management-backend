@@ -1,7 +1,10 @@
 const db = require('../config/db');
 
 
-// Create Volunteer Application
+// ===============================
+// CREATE VOLUNTEER APPLICATION
+// ===============================
+
 exports.createVolunteer = (req, res) => {
 
     const {
@@ -21,8 +24,16 @@ exports.createVolunteer = (req, res) => {
 
     const sql = `
         INSERT INTO volunteers
-        (name, email, phone, ngo, skills, message)
-        VALUES (?, ?, ?, ?, ?, ?)
+        (
+            name,
+            email,
+            phone,
+            ngo,
+            skills,
+            message
+        )
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id
     `;
 
     db.query(
@@ -30,15 +41,15 @@ exports.createVolunteer = (req, res) => {
         [
             name,
             email,
-            phone,
-            ngo,
-            skills,
-            message
+            phone || null,
+            ngo || null,
+            skills || null,
+            message || null
         ],
         (err, result) => {
 
             if (err) {
-                console.error(err);
+                console.error('Error creating volunteer:', err);
 
                 return res.status(500).json({
                     message: 'Failed to submit volunteer application'
@@ -47,14 +58,17 @@ exports.createVolunteer = (req, res) => {
 
             res.status(201).json({
                 message: 'Volunteer application submitted successfully',
-                id: result.insertId
+                id: result.rows[0].id
             });
         }
     );
 };
 
 
-// Get All Volunteers
+// ===============================
+// GET ALL VOLUNTEERS
+// ===============================
+
 exports.getVolunteers = (req, res) => {
 
     const sql = `
@@ -63,22 +77,25 @@ exports.getVolunteers = (req, res) => {
         ORDER BY created_at DESC
     `;
 
-    db.query(sql, (err, results) => {
+    db.query(sql, (err, result) => {
 
         if (err) {
-            console.error(err);
+            console.error('Error fetching volunteers:', err);
 
             return res.status(500).json({
                 message: 'Failed to fetch volunteers'
             });
         }
 
-        res.json(results);
+        res.json(result.rows);
     });
 };
 
 
-// Get Volunteer By ID
+// ===============================
+// GET VOLUNTEER BY ID
+// ===============================
+
 exports.getVolunteerById = (req, res) => {
 
     const { id } = req.params;
@@ -86,47 +103,56 @@ exports.getVolunteerById = (req, res) => {
     const sql = `
         SELECT *
         FROM volunteers
-        WHERE id = ?
+        WHERE id = $1
     `;
 
-    db.query(sql, [id], (err, results) => {
+    db.query(sql, [id], (err, result) => {
 
         if (err) {
-            console.error(err);
+            console.error('Error fetching volunteer:', err);
 
             return res.status(500).json({
                 message: 'Failed to fetch volunteer'
             });
         }
 
-        if (results.length === 0) {
+        if (result.rows.length === 0) {
             return res.status(404).json({
                 message: 'Volunteer not found'
             });
         }
 
-        res.json(results[0]);
+        res.json(result.rows[0]);
     });
 };
 
 
-// Delete Volunteer
+// ===============================
+// DELETE VOLUNTEER
+// ===============================
+
 exports.deleteVolunteer = (req, res) => {
 
     const { id } = req.params;
 
     const sql = `
         DELETE FROM volunteers
-        WHERE id = ?
+        WHERE id = $1
     `;
 
-    db.query(sql, [id], (err) => {
+    db.query(sql, [id], (err, result) => {
 
         if (err) {
-            console.error(err);
+            console.error('Error deleting volunteer:', err);
 
             return res.status(500).json({
                 message: 'Failed to delete volunteer'
+            });
+        }
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({
+                message: 'Volunteer not found'
             });
         }
 
