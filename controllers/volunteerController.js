@@ -161,3 +161,52 @@ exports.deleteVolunteer = (req, res) => {
         });
     });
 };
+
+// ===============================
+// UPDATE VOLUNTEER STATUS
+// ===============================
+
+exports.updateVolunteerStatus = (req, res) => {
+
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!['pending', 'accepted', 'rejected'].includes(status)) {
+        return res.status(400).json({
+            message: 'Invalid volunteer status'
+        });
+    }
+
+    const sql = `
+        UPDATE volunteers
+        SET status = $1
+        WHERE id = $2
+        RETURNING *
+    `;
+
+    db.query(
+        sql,
+        [status, id],
+        (err, result) => {
+
+            if (err) {
+                console.error('Error updating volunteer status:', err);
+
+                return res.status(500).json({
+                    message: 'Failed to update volunteer status'
+                });
+            }
+
+            if (result.rows.length === 0) {
+                return res.status(404).json({
+                    message: 'Volunteer not found'
+                });
+            }
+
+            res.json({
+                message: `Volunteer ${status} successfully`,
+                volunteer: result.rows[0]
+            });
+        }
+    );
+};

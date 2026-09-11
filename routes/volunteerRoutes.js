@@ -26,5 +26,9 @@ router.get('/:id', authMiddleware, volunteerController.getVolunteerById);
 // Delete volunteer application
 router.delete('/:id', authMiddleware, volunteerController.deleteVolunteer);
 
-
+router.put(
+    '/:id/status',
+    authMiddleware,
+    volunteerController.updateVolunteerStatus
+);
 module.exports = router;
