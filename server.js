@@ -38,7 +38,26 @@ app.get('/api/admin/test', authMiddleware, (req, res) => {
     });
 });
 
+app.get('/api/test-email-connection', async (req, res) => {
+  try {
+    const transporter = require('./config/mailer');
 
+    await transporter.verify();
+
+    res.json({
+      success: true,
+      message: 'SMTP connection successful'
+    });
+  } catch (error) {
+    console.error('SMTP TEST ERROR:', error);
+
+    res.status(500).json({
+      success: false,
+      error: error.code,
+      message: error.message
+    });
+  }
+});
 
 const PORT = process.env.PORT || 3000;
 
